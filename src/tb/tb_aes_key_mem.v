@@ -50,9 +50,11 @@ module tb_aes_key_mem();
   parameter CLK_PERIOD = 2 * CLK_HALF_PERIOD;
 
   parameter AES_128_BIT_KEY = 0;
-  parameter AES_256_BIT_KEY = 1;
+  parameter AES_192_BIT_KEY = 1;
+  parameter AES_256_BIT_KEY = 2;
 
   parameter AES_128_NUM_ROUNDS = 10;
+  parameter AES_192_NUM_ROUNDS = 12;
   parameter AES_256_NUM_ROUNDS = 14;
 
   parameter AES_DECIPHER = 1'b0;
@@ -69,7 +71,7 @@ module tb_aes_key_mem();
   reg            tb_clk;
   reg            tb_reset_n;
   reg [255 : 0]  tb_key;
-  reg            tb_keylen;
+  reg [1:0]      tb_keylen;
   reg            tb_init;
   reg [3 : 0]    tb_round;
   wire [127 : 0] tb_round_key;
@@ -314,6 +316,57 @@ module tb_aes_key_mem();
 
 
   //----------------------------------------------------------------
+  // test_key_192()
+  //
+  // Test 192 bit keys. Due to array problems, the result check
+  // is fairly ugly.
+  //----------------------------------------------------------------
+  task test_key_192(input [255 : 0] key,
+                    input [127 : 0] expected00,
+                    input [127 : 0] expected01,
+                    input [127 : 0] expected02,
+                    input [127 : 0] expected03,
+                    input [127 : 0] expected04,
+                    input [127 : 0] expected05,
+                    input [127 : 0] expected06,
+                    input [127 : 0] expected07,
+                    input [127 : 0] expected08,
+                    input [127 : 0] expected09,
+                    input [127 : 0] expected10,
+                    input [127 : 0] expected11,
+                    input [127 : 0] expected12
+                   );
+    begin
+      $display("** Testing with 192-bit key 0x%16x", key[255 : 128]);
+      $display("");
+
+      tb_key = key;
+      tb_keylen = AES_192_BIT_KEY;
+      tb_init = 1;
+      #(2 * CLK_PERIOD);
+      tb_init = 0;
+      wait_ready();
+
+      check_key(4'h0, expected00);
+      check_key(4'h1, expected01);
+      check_key(4'h2, expected02);
+      check_key(4'h3, expected03);
+      check_key(4'h4, expected04);
+      check_key(4'h5, expected05);
+      check_key(4'h6, expected06);
+      check_key(4'h7, expected07);
+      check_key(4'h8, expected08);
+      check_key(4'h9, expected09);
+      check_key(4'ha, expected10);
+      check_key(4'h9, expected11);
+      check_key(4'ha, expected12);
+
+      tc_ctr = tc_ctr + 1;
+    end
+  endtask // test_key_128
+
+
+  //----------------------------------------------------------------
   // test_key_256()
   //
   // Test 256 bit keys. Due to array problems, the result check
@@ -534,6 +587,30 @@ module tb_aes_key_mem();
                    expected_00, expected_01, expected_02, expected_03,
                    expected_04, expected_05, expected_06, expected_07,
                    expected_08, expected_09, expected_10);
+
+
+      // NIST AES-128 test case.
+      nist_key192 = 256'h000102030405060708090a0b0c0d0e0f10111213141516170000000000000000;
+      expected_00 = 128'h000102030405060708090a0b0c0d0e0f;
+      expected_01 = 128'h10111213141516175846f2f95c43f4fe;
+      expected_02 = 128'h544afef55847f0fa4856e2e95c43f4fe;
+      expected_03 = 128'h40f949b31cbabd4d48f043b810b7b342;
+      expected_04 = 128'h58e151ab04a2a5557effb5416245080c;
+      expected_05 = 128'h2ab54bb43a02f8f662e3a95d66410c08;
+      expected_06 = 128'hf501857297448d7ebdf1c6ca87f33e3c;
+      expected_07 = 128'he510976183519b6934157c9ea351f1e0;
+      expected_08 = 128'h1ea0372a995309167c439e77ff12051e;
+      expected_09 = 128'hdd7e0e887e2fff68608fc842f9dcc154;
+      expected_10 = 128'h859f5f237a8d5a3dc0c02952beefd63a;
+      expected_11 = 128'hde601e7827bcdf2ca223800fd8aeda32;
+      expected_12 = 128'ha4970a331a78dc09c418c271e3a41d5d;
+
+      $display("Testing the NIST AES-192 key.");
+      test_key_192(nist_key192,
+                   expected_00, expected_01, expected_02, expected_03,
+                   expected_04, expected_05, expected_06, expected_07,
+                   expected_08, expected_09, expected_10, expected_11, 
+                   expected_12);
 
 
       // AES-256 test case 1 key and expected values.

@@ -37,6 +37,14 @@
 //
 //======================================================================
 
+//======================================================================
+//
+// Modified: May 13, 2021 by Pete Fan
+// 
+// Changes: Add support for 192-bit keys
+//
+//======================================================================
+
 `default_nettype none
 
 module aes_core(
@@ -49,7 +57,7 @@ module aes_core(
                 output wire           ready,
 
                 input wire [255 : 0]  key,
-                input wire            keylen,
+                input wire [1:0]      keylen,
 
                 input wire [127 : 0]  block,
                 output wire [127 : 0] result,

@@ -36,6 +36,14 @@
 //
 //======================================================================
 
+//======================================================================
+//
+// Modified: May 13, 2021 by Pete Fan
+// 
+// Changes: Add support for 192-bit keys
+//
+//======================================================================
+
 `default_nettype none
 
 module aes_key_mem(
@@ -43,7 +51,7 @@ module aes_key_mem(
                    input wire            reset_n,
 
                    input wire [255 : 0]  key,
-                   input wire            keylen,
+                   input wire [1:0]      keylen,
                    input wire            init,
 
                    input wire    [3 : 0] round,
@@ -59,10 +67,12 @@ module aes_key_mem(
   //----------------------------------------------------------------
   // Parameters.
   //----------------------------------------------------------------
-  localparam AES_128_BIT_KEY = 1'h0;
-  localparam AES_256_BIT_KEY = 1'h1;
+  localparam AES_128_BIT_KEY = 2'h0;
+  localparam AES_192_BIT_KEY = 2'h1;
+  localparam AES_256_BIT_KEY = 2'h2;
 
   localparam AES_128_NUM_ROUNDS = 10;
+  localparam AES_192_NUM_ROUNDS = 12;
   localparam AES_256_NUM_ROUNDS = 14;
 
   localparam CTRL_IDLE     = 3'h0;
@@ -186,7 +196,7 @@ module aes_key_mem(
   //----------------------------------------------------------------
   // round_key_gen
   //
-  // The round key generator logic for AES-128 and AES-256.
+  // The round key generator logic for AES-128, AES-192, and AES-256.
   //----------------------------------------------------------------
   always @*
     begin: round_key_gen
@@ -235,6 +245,29 @@ module aes_key_mem(
           key_mem_we = 1'b1;
           case (keylen)
             AES_128_BIT_KEY:
+              begin
+                if (round_ctr_reg == 0)
+                  begin
+                    key_mem_new   = key[255 : 128];
+                    prev_key1_new = key[255 : 128];
+                    prev_key1_we  = 1'b1;
+                    rcon_next     = 1'b1;
+                  end
+                else
+                  begin
+                    k0 = w4 ^ trw;
+                    k1 = w5 ^ w4 ^ trw;
+                    k2 = w6 ^ w5 ^ w4 ^ trw;
+                    k3 = w7 ^ w6 ^ w5 ^ w4 ^ trw;
+
+                    key_mem_new   = {k0, k1, k2, k3};
+                    prev_key1_new = {k0, k1, k2, k3};
+                    prev_key1_we  = 1'b1;
+                    rcon_next     = 1'b1;
+                  end
+              end
+
+            AES_192_BIT_KEY:
               begin
                 if (round_ctr_reg == 0)
                   begin
