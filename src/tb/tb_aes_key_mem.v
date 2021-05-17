@@ -49,9 +49,9 @@ module tb_aes_key_mem();
   parameter CLK_HALF_PERIOD = 1;
   parameter CLK_PERIOD = 2 * CLK_HALF_PERIOD;
 
-  parameter AES_128_BIT_KEY = 0;
-  parameter AES_192_BIT_KEY = 1;
-  parameter AES_256_BIT_KEY = 2;
+  parameter AES_128_BIT_KEY = 2'b00;
+  parameter AES_192_BIT_KEY = 2'b01;
+  parameter AES_256_BIT_KEY = 2'b10;
 
   parameter AES_128_NUM_ROUNDS = 10;
   parameter AES_192_NUM_ROUNDS = 12;
@@ -79,8 +79,7 @@ module tb_aes_key_mem();
 
   wire [31 : 0]  tb_sboxw;
   wire [31 : 0]  tb_new_sboxw;
-
-
+  
   //----------------------------------------------------------------
   // Device Under Test.
   //----------------------------------------------------------------
@@ -176,8 +175,6 @@ module tb_aes_key_mem();
         begin
           $display("Sbox functionality:");
           $display("sboxw = 0x%08x", sbox.sboxw);
-          $display("tmp_new_sbox0 = 0x%02x, tmp_new_sbox1 = 0x%02x, tmp_new_sbox2 = 0x%02x, tmp_new_sbox3",
-                   sbox.tmp_new_sbox0, sbox.tmp_new_sbox1, sbox.tmp_new_sbox2, sbox.tmp_new_sbox3);
           $display("new_sboxw = 0x%08x", sbox.new_sboxw);
           $display("");
         end
@@ -337,7 +334,7 @@ module tb_aes_key_mem();
                     input [127 : 0] expected12
                    );
     begin
-      $display("** Testing with 192-bit key 0x%16x", key[255 : 128]);
+      $display("** Testing with 192-bit key 0x%16x", key[255 : 64]);
       $display("");
 
       tb_key = key;
@@ -358,8 +355,8 @@ module tb_aes_key_mem();
       check_key(4'h8, expected08);
       check_key(4'h9, expected09);
       check_key(4'ha, expected10);
-      check_key(4'h9, expected11);
-      check_key(4'ha, expected12);
+      check_key(4'hb, expected11);
+      check_key(4'hc, expected12);
 
       tc_ctr = tc_ctr + 1;
     end
@@ -453,6 +450,7 @@ module tb_aes_key_mem();
       reg [255 : 0] key128_2;
       reg [255 : 0] key128_3;
       reg [255 : 0] nist_key128;
+      reg [255 : 0] nist_key192;
       reg [255 : 0] key256_0;
       reg [255 : 0] key256_1;
       reg [255 : 0] key256_2;
@@ -722,3 +720,4 @@ endmodule // tb_aes_key_mem
 //======================================================================
 // EOF tb_aes_key_mem.v
 //======================================================================
+
